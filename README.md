@@ -1,7 +1,7 @@
 # Spring Boot (3)  Spring Native (GraalVM) :fire:
 Kubernetes Java Native Application with Spring Boot 3 (Spring Native)
 
-Show some :heart: and :star: to support this report
+## Show some :heart: and :star: to support this repo
 
 Okay!! so im just going to jump right in. As some of you might know that Spring Boot 3, Spring Framework 6 has just released been
 a few days ago before writing this article,  here are some of the features we can get excited about :smile:
