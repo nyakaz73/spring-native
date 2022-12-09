@@ -15,17 +15,12 @@
 	<description>Spring Boot 3 for Kubernetes Cloud Native Development</description>
 	<properties>
 		<java.version>17</java.version>
+		<native-build-tools-plugin.version>0.9.17</native-build-tools-plugin.version>
 	</properties>
 	<dependencies>
 		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-web</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-			<scope>runtime</scope>
+			<groupId>io.r2dbc</groupId>
+			<artifactId>r2dbc-h2</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -37,13 +32,65 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-r2dbc</artifactId>
+		</dependency>
+
+
 	</dependencies>
 
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<image>
+						<builder>paketobuildpacks/builder:tiny</builder>
+						<env>
+							<BP_NATIVE_IMAGE>true</BP_NATIVE_IMAGE>
+							<BP_JVM_VERSION>17.*</BP_JVM_VERSION>
+						</env>
+					</image>
+				</configuration>
+				<executions>
+					<execution>
+						<id>process-aot</id>
+						<goals>
+							<goal>process-aot</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
 				<groupId>org.graalvm.buildtools</groupId>
 				<artifactId>native-maven-plugin</artifactId>
+				<configuration>
+					<classesDirectory>${project.build.outputDirectory}</classesDirectory>
+					<metadataRepository>
+						<enabled>true</enabled>
+					</metadataRepository>
+					<requiredVersion>22.3</requiredVersion>
+				</configuration>
+				<executions>
+					<execution>
+						<id>add-reachability-metadata</id>
+						<goals>
+							<goal>add-reachability-metadata</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
@@ -59,6 +106,8 @@
 			</plugin>
 		</plugins>
 	</build>
+
+
 
 	<profiles>
 		<profile>
@@ -82,5 +131,115 @@
 			</build>
 		</profile>
 	</profiles>
+
+
+<!--	<build>-->
+<!--		<pluginManagement>-->
+<!--			<plugins>-->
+<!--				<plugin>-->
+<!--					<groupId>org.graalvm.buildtools</groupId>-->
+<!--					<artifactId>native-maven-plugin</artifactId>-->
+<!--					<version>${native-build-tools-plugin.version}</version>-->
+<!--					<extensions>true</extensions>-->
+<!--				</plugin>-->
+<!--			</plugins>-->
+<!--		</pluginManagement>-->
+<!--	</build>-->
+<!--	<profiles>-->
+<!--		<profile>-->
+<!--			<id>native</id>-->
+<!--			<build>-->
+<!--				<plugins>-->
+<!--					<plugin>-->
+<!--						<groupId>org.springframework.boot</groupId>-->
+<!--						<artifactId>spring-boot-maven-plugin</artifactId>-->
+<!--						<configuration>-->
+<!--							<image>-->
+<!--								<builder>paketobuildpacks/builder:tiny</builder>-->
+<!--								<env>-->
+<!--									<BP_NATIVE_IMAGE>true</BP_NATIVE_IMAGE>-->
+<!--								</env>-->
+<!--							</image>-->
+<!--						</configuration>-->
+<!--						<executions>-->
+<!--							<execution>-->
+<!--								<id>process-aot</id>-->
+<!--								<goals>-->
+<!--									<goal>process-aot</goal>-->
+<!--								</goals>-->
+<!--							</execution>-->
+<!--						</executions>-->
+<!--					</plugin>-->
+<!--					<plugin>-->
+<!--						<groupId>org.graalvm.buildtools</groupId>-->
+<!--						<artifactId>native-maven-plugin</artifactId>-->
+<!--						<configuration>-->
+<!--							<classesDirectory>${project.build.outputDirectory}</classesDirectory>-->
+<!--							<metadataRepository>-->
+<!--								<enabled>true</enabled>-->
+<!--							</metadataRepository>-->
+<!--							<requiredVersion>22.3</requiredVersion>-->
+<!--						</configuration>-->
+<!--						<executions>-->
+<!--							<execution>-->
+<!--								<id>add-reachability-metadata</id>-->
+<!--								<goals>-->
+<!--									<goal>add-reachability-metadata</goal>-->
+<!--								</goals>-->
+<!--							</execution>-->
+<!--						</executions>-->
+<!--					</plugin>-->
+<!--				</plugins>-->
+<!--			</build>-->
+<!--		</profile>-->
+<!--		<profile>-->
+<!--			<id>nativeTest</id>-->
+<!--			<dependencies>-->
+<!--				<dependency>-->
+<!--					<groupId>org.junit.platform</groupId>-->
+<!--					<artifactId>junit-platform-launcher</artifactId>-->
+<!--					<scope>test</scope>-->
+<!--				</dependency>-->
+<!--			</dependencies>-->
+<!--			<build>-->
+<!--				<plugins>-->
+<!--					<plugin>-->
+<!--						<groupId>org.springframework.boot</groupId>-->
+<!--						<artifactId>spring-boot-maven-plugin</artifactId>-->
+<!--						<executions>-->
+<!--							<execution>-->
+<!--								<id>process-test-aot</id>-->
+<!--								<goals>-->
+<!--									<goal>process-test-aot</goal>-->
+<!--								</goals>-->
+<!--							</execution>-->
+<!--						</executions>-->
+<!--					</plugin>-->
+<!--					<plugin>-->
+<!--						<groupId>org.graalvm.buildtools</groupId>-->
+<!--						<artifactId>native-maven-plugin</artifactId>-->
+<!--						<configuration>-->
+<!--							<classesDirectory>${project.build.outputDirectory}</classesDirectory>-->
+<!--							<metadataRepository>-->
+<!--								<enabled>true</enabled>-->
+<!--							</metadataRepository>-->
+<!--							<requiredVersion>22.3</requiredVersion>-->
+<!--						</configuration>-->
+<!--						<executions>-->
+<!--							<execution>-->
+<!--								<id>native-test</id>-->
+<!--								<goals>-->
+<!--									<goal>test</goal>-->
+<!--								</goals>-->
+<!--							</execution>-->
+<!--						</executions>-->
+<!--					</plugin>-->
+<!--				</plugins>-->
+<!--			</build>-->
+<!--		</profile>-->
+<!--	</profiles>-->
+
+
+
 
 </project>
