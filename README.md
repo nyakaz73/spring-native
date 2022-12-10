@@ -610,13 +610,16 @@ Lets port forward grafana
 ```
 Now visit your localhost:3000 you should be able to see the dash.
 
-Okay this has been a very long one im planning to do more tutorials on kubernetes and microserves, if you enjoy
+Okay this has been a very long one i'm planning to do more tutorials on kubernetes and microserves, if you enjoy
 this kind of staff don't forget to drop a follow and like, also you can subscribe to my youtube channel [@stackdev-io](https://www.youtube.com/channel/UCacNBWW7T2j_St593VHvulg).
 
-Happy Codding !!
+Happy Coding !!
+
+### Code Repo
+Code Github Repo :point_right: [here](https://github.com/nyakaz73/spring-native)
 
 ## Created and Mantained by
-* :computer: Author: [Tafadzwa Lameck Nyamukapa](https://github.com/nyakaz73) :
+* :computer: Github: [Tafadzwa Lameck Nyamukapa](https://github.com/nyakaz73) :
 * :memo: Email:  [tafadzwalnyamukapa@gmail.com]
 * :tv: Youtube: [@stackdev-io](https://www.youtube.com/channel/UCacNBWW7T2j_St593VHvulg)
 
