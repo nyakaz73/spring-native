@@ -377,3 +377,209 @@ ghcr.io/graalvm/native-image   ol8-java17-22   ba9db7c19687   6 days ago        
 and you can run it as above.
 
 * Okay enough of docker now let deploy this badboy to Kubernetes
+
+### Install minikube and VM
+You can follow the installation guide [here](https://minikube.sigs.k8s.io/docs/start/)
+
+On MacOS simply run
+```shell
+brew install minikube
+```
+To install the hypervisor VM
+```shell
+brew install hyperkit
+```
+Once installed you can start using the VM env in my case im using hyperkit you can follow the installation guide [here](https://minikube.sigs.k8s.io/docs/drivers/hyperkit/)
+
+
+```shell
+minikube start --driver=hyperkit
+```
+
+### Install Istio-ingress (Network gateway)
+To install istio you can follow this [link](https://istio.io/latest/docs/setup/getting-started/)
+
+```shell
+curl -L https://istio.io/downloadIstio | sh -
+```
+```shell
+cd istio-1.16.0  
+```
+```shell
+export PATH=$PWD/bin:$PATH 
+```
+To install
+```shell
+istioctl install --set profile=demo -y
+```
+If you face resouce allocation issues try to increate the memory set to minikube and reinstall
+
+```shell
+minikube config set memory 4096
+```
+
+If everything went well you should be able to see the default ***istio-system*** namespace created you can confirm by get all namespaces:
+```shell
+kubectl get ns
+```
+
+To check the installed istio components:
+
+```shell
+kubectl get all -n istio-system
+```
+* You can see the control plane ***istiod*** has been configured including the ***egress***(exit traffic points from the mesh) and 
+and ***ingress*** (allows you to define entry points into the mesh for incoming traffic) gateways.
+
+### Application Ks8 resources (Kubernetes resources)
+
+Let's create the namespace for our app called backend-services
+
+```shell
+kubectl create namespace backend-services
+```
+
+For the istio to be able to inject envoy proxies to our pods we need to inject istio-inject to our namespae:
+
+To check the labels associated to a namespace
+
+```shell
+kubectl get ns backend-services --show-labels
+```
+
+To enable istio injection to our backend-services namespace
+
+```shell
+kubectl label namespace backend-services istio-injection=enabled
+```
+### Application Ks8 resources (Kubernetes resources)
+Now create a folder called **k8s** in you root folder with a spring-native.yaml file with the following configs:
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-native
+  namespace: backend-services
+  labels:
+    app: spring-native
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring-native
+  template:
+    metadata:
+      labels:
+        app: spring-native
+    spec:
+      containers:
+        - name: spring-native
+          image: spring/mynative:latest
+          ports:
+            - containerPort: 8080
+          imagePullPolicy: Never #we want to pull the image locally
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-native
+  namespace: backend-services
+spec:
+  ports:
+    - nodePort: 32000
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: spring-native
+  type: LoadBalancer
+```
+Notice in this file i have created the Kubernetes deployment and service configs with 1 replica/container.
+
+* **NB** ImagePolicy pull policy configs
+If your image is in a registry somewhere you can skip this section
+
+
+Notice the imagePullPolicy is set to Never, this is because we don't want to pull the image from a public registry since it 
+is available locally.
+
+To fix this, I use the minikube docker-env command that outputs environment variables needed to point the local Docker daemon to the minikube internal Docker registry:
+```shell
+minikube docker-env
+export DOCKER_TLS_VERIFY="1"
+export DOCKER_HOST="tcp://192.168.64.2:2376"
+export DOCKER_CERT_PATH="/Users/lameck/.minikube/certs"
+export MINIKUBE_ACTIVE_DOCKERD="minikube"
+
+# To point your shell to minikube's docker-daemon, run:
+# eval $(minikube -p minikube docker-env)
+```
+To apply these variables run the proposed command:
+
+```shell
+eval $(minikube -p minikube docker-env)
+```
+
+I now let's  build the image once again, so that it’s installed in the minikube registry, instead of the local one:
+```shell
+docker build -f Dockerfile.native  -t spring/mynative .
+```
+* Now that we have the image is build in our minikube local registry let try to spin the pods up
+
+
+### Spinning the pods
+To deploy the service to our minikube cluster run the following command:
+```shell
+kubectl apply -f k8s/spring-native.yaml -n backend-services
+```
+Notice we have specified the namespace we want to deploy to.
+
+You can check all of our application resources deployed by running:
+
+```shell
+kubectl get all -n backend-services
+```
+```shell
+ kubectl get all -n backend-services
+NAME                                 READY   STATUS    RESTARTS   AGE
+pod/spring-native-7cf9f8d8f6-hn4gd   2/2     Running   0          3m16s
+
+NAME                    TYPE           CLUSTER-IP     EXTERNAL-IP   PORT(S)          AGE
+service/spring-native   LoadBalancer   10.106.28.73   <pending>     8080:32000/TCP   3m16s
+
+NAME                            READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/spring-native   1/1     1            1           3m16s
+
+NAME                                       DESIRED   CURRENT   READY   AGE
+replicaset.apps/spring-native-7cf9f8d8f6   1         1         1       3m16s
+
+```
+Notice how we have two running pods 
+
+Let's try to describe that pod and see whats going on:
+
+```shell
+kubectl describe pod spring-native-7cf9f8d8f6-hn4gd -n backend-services
+```
+If you check the running container section you can see the istio-proxy was injected on our running pod, remember 
+we enabled istio-injection to our backend-services namespace.
+
+So far so good if you ask me , now let try to test our service :
+
+To do that we need to port-forward our service so that it become accessible outside of our minikube cluster
+```shell
+kubectl describe pod spring-native-7cf9f8d8f6-hn4gd -n backend-services
+```
+
+Lets curl our endpoint:
+```shell
+ curl http://localhost:8080/api/customers
+data:{"id":1,"firstName":"Daniel","lastName":null,"email":null}
+
+data:{"id":2,"firstName":"Peter","lastName":null,"email":null}
+
+data:{"id":3,"firstName":"Mary","lastName":null,"email":null}
+
+data:{"id":4,"firstName":"Terryn","lastName":null,"email":null}
+```
+Viola!! Congratulations you have successfully deployed a spring native application to kubernetes.
