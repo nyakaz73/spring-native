@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-native
+  namespace: backend-services
+  labels:
+    app: spring-native
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spring-native
+  template:
+    metadata:
+      labels:
+        app: spring-native
+    spec:
+      containers:
+        - name: spring-native
+          image: spring/mynative:latest
+          ports:
+            - containerPort: 8080
+          imagePullPolicy: Never #we want to pull the image locally
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-native
+  namespace: backend-services
+spec:
+  ports:
+    - nodePort: 32000
+      port: 8080
+      targetPort: 8080
+  selector:
+    app: spring-native
+  type: LoadBalancer
