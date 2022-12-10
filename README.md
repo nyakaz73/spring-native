@@ -29,7 +29,7 @@ is what is called the **Container first approach** philosophy.
 Graal VM is an Oracle high-performance JDK distribution written for Java and other JVM languages, that provides a
 Native Image Builder for building native code and package it together with the VM into a standalone executable.
 
-### How?? 
+### How?
 Staff that used to be done by Java Applications at runtime i.e:
 
 * Compiling source code &#8594; Load and parse configurations  &#8594; Analyse dependencies &#8594; Build dependency tree &#8594; Execute Code
@@ -45,7 +45,11 @@ This will inturn gives you a native executable that has a low memory foot-print 
 Spring Native provides support for compiling Spring application to Native executables using GraalVM native image compiler.
 
 ## Get Started
-To get started make sure you have Docker and GraalVM installed in your dev machine.
+To get started you can clone the code repository [here](https://github.com/nyakaz73/spring-native) the repo has a basic spring Webflux API with a single endpoint.
+
+If you want to learn more about Spring webflux you can check out my youtube course [here](https://youtu.be/PecY7og5KyI)
+
+Also make sure you have Docker and GraalVM installed in your dev machine.
 
 There are two basic ways to build a Spring Boot native application:
  * 1.  You can use [Spring Boot Buildpack](https://docs.spring.io/spring-native/docs/current/reference/htmlsingle/#getting-started-buildpacks)  support to generate a lightweight container containing a native excutable
@@ -564,9 +568,9 @@ kubectl describe pod spring-native-7cf9f8d8f6-hn4gd -n backend-services
 If you check the running container section you can see the istio-proxy was injected on our running pod, remember 
 we enabled istio-injection to our backend-services namespace.
 
-So far so good if you ask me , now let try to test our service :
+So far so good if you ask me , now let's try to test our service :
 
-To do that we need to port-forward our service so that it become accessible outside of our minikube cluster
+To do that we need to port-forward our service so that it becomes accessible outside of our minikube cluster
 ```shell
 kubectl describe pod spring-native-7cf9f8d8f6-hn4gd -n backend-services
 ```
@@ -585,7 +589,7 @@ data:{"id":4,"firstName":"Terryn","lastName":null,"email":null}
 Viola!! Congratulations you have successfully deployed a spring native application to kubernetes.
 
 ## Metrics and Tracing
-The beauty of using istio as you service mesh is it comes with addons that allows us to do monitoring and data visualisation.
+The beauty of using istio as a service mesh is it comes with addons that allows you to do monitoring and data visualisation.
 
 To install these addons just navigate to the istio installation folder we downloaded earlier:
 ```shell
