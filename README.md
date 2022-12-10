@@ -573,7 +573,7 @@ kubectl describe pod spring-native-7cf9f8d8f6-hn4gd -n backend-services
 
 Lets curl our endpoint:
 ```shell
- curl http://localhost:8080/api/customers
+> curl http://localhost:8080/api/customers
 data:{"id":1,"firstName":"Daniel","lastName":null,"email":null}
 
 data:{"id":2,"firstName":"Peter","lastName":null,"email":null}
@@ -583,3 +583,48 @@ data:{"id":3,"firstName":"Mary","lastName":null,"email":null}
 data:{"id":4,"firstName":"Terryn","lastName":null,"email":null}
 ```
 Viola!! Congratulations you have successfully deployed a spring native application to kubernetes.
+
+## Metrics and Tracing
+The beauty of using istio as you service mesh is it comes with addons that allows us to do monitoring and data visualisation.
+
+To install these addons just navigate to the istio installation folder we downloaded earlier:
+```shell
+cd ~/istio-1.16.0/samples/addons
+```
+In that folder you can see we have a couple of components including:
+* grafana : open source data visual tool for metrics data
+* prometheus: for monitoring anything in the cluster including memory , cpu, and other kubernetes components
+* kiali : It helps you understand the structure and health of your service mesh by monitoring traffic flow to infer the topology and report errors.
+
+To install these different addons metrics and tracing component:
+```shell
+kubectl apply -f .
+```
+You can check the installed components
+```shell
+kubectl get all -n istio-system
+```
+Lets port forward grafana
+```shell
+ kubectl port-forward svc/grafana 3000 -n istio-system
+```
+Now visit your localhost:3000 you should be able to see the dash.
+
+Okay this has been a very long one im planning to do more tutorials on kubernetes and microserves, if you enjoy
+this kind of staff don't forget to drop a follow and like, also you can subscribe to my youtube channel [@stackdev-io](https://www.youtube.com/channel/UCacNBWW7T2j_St593VHvulg).
+
+Happy Codding !!
+
+## Created and Mantained by
+* :computer: Author: [Tafadzwa Lameck Nyamukapa](https://github.com/nyakaz73) :
+* :memo: Email:  [tafadzwalnyamukapa@gmail.com]
+* :tv: Youtube: [@stackdev-io](https://www.youtube.com/channel/UCacNBWW7T2j_St593VHvulg)
+
+### License
+
+```
+MIT License
+
+Copyright (c) 2022 Tafadzwa Lameck Nyamukapa
+```
+
