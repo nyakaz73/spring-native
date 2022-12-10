@@ -146,7 +146,7 @@ How do we build native images ?
 </profiles>
 ```
 
-As mentioned above there are basically two approached to generate the Native Images /Executables.
+As mentioned above there are basically two approaches to generate the Native Images /Executables.
 
 * 1. First I'm going to demonstrate using [Native Build Tools]() to generate a native executable, with this approach
     make sure you have GraalVM installed
@@ -188,7 +188,7 @@ Notice how fast the application booted, in less than 100ms, pretty wild right??
 ```
 
 As we did before 
-* 2. First I'm going to demonstrate using [Spring Boot Buildpack support]() to generate a native docker image
+* 2. Secondly I'm going to demonstrate using [Spring Boot Buildpack support]() to generate a native docker image
     
 To generate a docker native image with spring you need to configure you build image to point to the **paketobuildpacks/builder:tiny** instead of the **base** image 
 with a **process-aot** goal:
@@ -380,7 +380,7 @@ ghcr.io/graalvm/native-image   ol8-java17-22   ba9db7c19687   6 days ago        
 ```
 and you can run it as above.
 
-* Okay enough of docker now let deploy this badboy to Kubernetes
+* Okay enough of docker now let's deploy this badboy to Kubernetes
 
 ### Install minikube and VM
 You can follow the installation guide [here](https://minikube.sigs.k8s.io/docs/start/)
