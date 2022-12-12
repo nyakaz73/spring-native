@@ -578,7 +578,8 @@ we enabled istio-injection to our backend-services namespace.
 
 So far so good if you ask me , now let's try to test our service :
 
-###Accessing this Application (Gateway and VirtualService)
+### Accessing this Application (Gateway and VirtualService)
+
 Since we are using istio as our service mesh, istio by default does not allow traffic in and out of our cluster by default. Istio uses gateways to manage inbound and outbound traffic.
 
 Istio by default comes with preconfigured gateway proxy deployments i.e istio-ingressgateway and istio-egressgateway.
