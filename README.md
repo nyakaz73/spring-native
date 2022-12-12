@@ -29,7 +29,7 @@ is what is called the **Container first approach** philosophy.
 Graal VM is an Oracle high-performance JDK distribution written for Java and other JVM languages, that provides a
 Native Image Builder for building native code and package it together with the VM into a standalone executable.
 
-### How?
+### How :question:
 Staff that used to be done by Java Applications at runtime i.e:
 
 * Compiling source code &#8594; Load and parse configurations  &#8594; Analyse dependencies &#8594; Build dependency tree &#8594; Execute Code
@@ -38,7 +38,7 @@ is now being done at build time by **Graal VM**  using  a process called **Ahead
 
 ### Goal :information_desk_person:
 
-This will inturn gives you a native executable that has a low memory foot-print and crazy start up time.
+This will in turn gives you a native executable that has a low memory foot-print and crazy start up time.
 
 
 ### What is Spring Native
@@ -256,7 +256,7 @@ paketobuildpacks/builder   tiny             3c7da334a749   42 years ago   590MB
 spring-native              0.0.1-SNAPSHOT   af16478763bf   42 years ago   96.8MB
 
 ```
-From just picking the generated image you can notice the size of the image has greatly reduced from **279MB** to **96.8MB**
+From just peeking the generated image you can notice the size of the image has greatly reduced from **279MB** to **96.8MB**
 
 To run the new generated image:
 
@@ -357,7 +357,7 @@ EXPOSE 8080
 COPY --from=builder /build/target/spring-native .
 ENTRYPOINT ["/spring-native"]
 ```
-This Dockerfile worked for me in my case since i'm on MacOS (not M1 chip), the other one were giving me some binary distro issues
+This *Dockerfile.native* worked for me in my case since i'm on MacOS (not M1 chip), the other one were giving me some binary distro issues
 since by default the Docker build command targets arm64 machine. There is a work-around  you can always specify the machine name
 in you docker build command eg:
 ```shell
@@ -380,16 +380,16 @@ ghcr.io/graalvm/native-image   ol8-java17-22   ba9db7c19687   6 days ago        
 ```
 and you can run it as above.
 
-* Okay enough of docker now let's deploy this badboy to Kubernetes
+* Okay enough of docker now let's deploy this bad boy to Kubernetes.
 
 ### Install minikube and VM
-You can follow the installation guide [here](https://minikube.sigs.k8s.io/docs/start/)
+You can follow the installation guide [here](https://minikube.sigs.k8s.io/docs/start/).
 
-On MacOS simply run
+On MacOS simply run:
 ```shell
 brew install minikube
 ```
-To install the hypervisor VM
+To install the hypervisor VM:
 ```shell
 brew install hyperkit
 ```
@@ -401,6 +401,9 @@ minikube start --driver=hyperkit
 ```
 
 ### Install Istio-ingress (Network gateway)
+Istio is an open-source implementation of the service mesh originally developed by IBM, Google, and Lyft. It can layer transparently onto a distributed application and provide all the benefits of a service mesh like traffic management, security, and observability.
+
+
 To install istio you can follow this [link](https://istio.io/latest/docs/setup/getting-started/)
 
 ```shell
@@ -416,10 +419,15 @@ To install
 ```shell
 istioctl install --set profile=demo -y
 ```
-If you face resouce allocation issues try to increate the memory set to minikube and reinstall
+If you face resource allocation issues try to increase the memory set to minikube and reinstall
 
 ```shell
 minikube config set memory 4096
+```
+Or alternatively start it with a resource allocation:
+
+```shell
+ minikube start --driver=hyperkit --memory 8192 --cpus 4
 ```
 
 If everything went well you should be able to see the default ***istio-system*** namespace created you can confirm by get all namespaces:
@@ -445,13 +453,13 @@ kubectl create namespace backend-services
 
 For the istio to be able to inject envoy proxies to our pods we need to inject istio-inject to our namespae:
 
-To check the labels associated to a namespace
+To check the labels associated to a namespace:
 
 ```shell
 kubectl get ns backend-services --show-labels
 ```
 
-To enable istio injection to our backend-services namespace
+To enable istio injection to our backend-services namespace:
 
 ```shell
 kubectl label namespace backend-services istio-injection=enabled
@@ -491,12 +499,12 @@ metadata:
   namespace: backend-services
 spec:
   ports:
-    - nodePort: 32000
+    - protocol: TCP
       port: 8080
       targetPort: 8080
   selector:
     app: spring-native
-  type: LoadBalancer
+  type: ClusterIP
 ```
 Notice in this file i have created the Kubernetes deployment and service configs with 1 replica/container.
 
@@ -570,10 +578,62 @@ we enabled istio-injection to our backend-services namespace.
 
 So far so good if you ask me , now let's try to test our service :
 
-To do that we need to port-forward our service so that it becomes accessible outside of our minikube cluster
-```shell
-kubectl describe pod spring-native-7cf9f8d8f6-hn4gd -n backend-services
+###Accessing this Application (Gateway and VirtualService)
+Since we are using istio as our service mesh, istio by default does not allow traffic in and out of our cluster by default. Istio uses gateways to manage inbound and outbound traffic.
+
+Istio by default comes with preconfigured gateway proxy deployments i.e istio-ingressgateway and istio-egressgateway.
+We need to create our own Gateway and Virtual Service to allow traffic in to our spring-native service.
+Inside the k8s service create another folder called istio with the following files , gateway.yaml and virtual-service.yaml respectively:
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: spring-native-gateway
+  namespace: backend-services
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "*"
 ```
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: spring-native
+  namespace: backend-services
+spec:
+  hosts:
+    - "*"
+  gateways:
+    - spring-native-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /api/customers
+      route:
+        - destination:
+            host: spring-native
+            port:
+              number: 8080
+```
+The above scripts create a Gateway called spring-native-gateway inside our backend-services namespace. Inside the Virtual Service we have defined the url we want to allow access to (api/customers) and a destination route which allows us to point to a specific service i.e spring-native service.
+You can apply the files:
+```shell
+kubectl apply -f k8s/istio/gateway.yaml
+kubectl apply -f k8s/istio/virtual-service.yaml
+```
+Since we are using our local minikube cluster and we don't have an external IP allocated we can demonstrate the ingressgateway by port-forwarding the gateway LoadBalancer.
+```shell
+kubectl port-forward service/istio-ingressgateway 8002:80 -n istio-system
+```
+You can always port-forward the service directly but kinda defeats the istio demo purpose.
 
 Lets curl our endpoint:
 ```shell
