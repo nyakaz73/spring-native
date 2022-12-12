@@ -30,9 +30,9 @@ metadata:
   namespace: backend-services
 spec:
   ports:
-    - nodePort: 32000
+    - protocol: TCP
       port: 8080
       targetPort: 8080
   selector:
     app: spring-native
-  type: LoadBalancer
+  type: ClusterIP
